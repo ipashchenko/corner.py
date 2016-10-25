@@ -246,14 +246,16 @@ def corner(xs, bins=20, range=None, weights=None, color="k",
             ax = axes[i, i]
         # Plot the histograms.
         if smooth1d is None:
-            n, _, _ = ax.hist(x, bins=bins[i], weights=weights,
-                              range=np.sort(range[i]), **hist_kwargs)
+            n, edges, _ = ax.hist(x, bins=bins[i], weights=weights,
+                                  range=np.sort(range[i]), **hist_kwargs)
+            edges = abs(edges[:-1]-edges[1:])
         else:
             if gaussian_filter is None:
                 raise ImportError("Please install scipy for smoothing")
             n, b = np.histogram(x, bins=bins[i], weights=weights,
                                 range=np.sort(range[i]))
             n = gaussian_filter(n, smooth1d)
+            edges = abs(b[:-1]-b[1:])
             x0 = np.array(list(zip(b[:-1], b[1:]))).flatten()
             y0 = np.array(list(zip(n, n))).flatten()
             ax.plot(x0, y0, **hist_kwargs)
@@ -265,10 +267,14 @@ def corner(xs, bins=20, range=None, weights=None, color="k",
         if priors is not None:
             if priors[i] is not None:
                 prior_xmin, prior_xmax = np.sort(range[i])
-                prior_xgrid = np.linspace(prior_xmin, prior_xmax, 100)
+                prior_xgrid = np.linspace(prior_xmin, prior_xmax, 500)
                 prior_ygrid = np.array([priors[i](xi) for xi in prior_xgrid])
-                scale_factor = n.max() / prior_ygrid.max()
-                ax.plot(prior_xgrid, prior_ygrid*scale_factor, color=prior_color)
+                if not hist_kwargs['normed']:
+                    k = len(xs.T) * edges[i]
+                else:
+                    k = 1
+                ax.plot(prior_xgrid, prior_ygrid * k,
+                        color=prior_color)
 
         # Plot quantiles if wanted.
         if len(quantiles) > 0:
