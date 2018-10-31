@@ -280,10 +280,12 @@ def corner(xs, bins=20, range=None, weights=None, color="k",
                 prior_xmin, prior_xmax = np.sort(range[i])
                 prior_xgrid = np.linspace(prior_xmin, prior_xmax, 500)
                 prior_ygrid = np.array([priors[i](xi) for xi in prior_xgrid])
-                if not hist_kwargs['normed']:
-                    k = len(xs.T) * edges[i]
-                else:
+                density = hist_kwargs.get("density", False)
+                normed = hist_kwargs.get("normed", False)
+                if density or normed:
                     k = 1
+                else:
+                    k = len(xs.T)*edges[i]
                 ax.plot(prior_xgrid, prior_ygrid * k,
                         color=prior_color)
 
